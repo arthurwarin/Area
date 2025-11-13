@@ -1,0 +1,81 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+pnpm-lock.yaml
+.pnpm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+.turbo/
+
+# Prisma
+backend/shared/prisma/client/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+db_data/
+
+# Logs
+logs/
+*.log
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+coverage/
+
+# APK files and distribution
+*.aab
+
+# Setup scripts
+setup-*.ps1
+setup-*.sh
+start-ngrok.ps1
+
+# Ngrok
+ngrok.yml
+ngrok-*.log
+.nyc_output/
+*.lcov
+
+# Misc
+.cache/
+tmp/
+temp/
+.tmp/
+
+# Docker
+*.dockerfile.swp
+
+# Mobile
+.expo/
+.expo-shared/
+
+# OS
+Thumbs.db
+.DS_Store

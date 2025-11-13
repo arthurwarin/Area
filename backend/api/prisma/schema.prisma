@@ -1,0 +1,112 @@
+generator client {
+    provider = "prisma-client-js"
+    output   = "../../shared/prisma/client"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model Users {
+    id            Int            @id @default(autoincrement())
+    email         String         @unique
+    password      String
+    role          String
+    name          String?
+    microsoftId   String?        @unique
+    workflows     Workflows[]
+    userService   UserService[]
+    timerTriggers TimerTrigger[]
+}
+
+model UserService {
+    id           Int      @id @default(autoincrement())
+    user         Users    @relation(fields: [userId], references: [id])
+    userId       Int
+    service      Services @relation(fields: [serviceId], references: [id])
+    serviceId    Int
+    token        String // OAuth access token
+    refreshToken String? // pour reavoir un access token
+    createdAt    DateTime @default(now())
+    updatedAt    DateTime @updatedAt
+}
+
+model Services {
+    id           Int           @id
+    name         String        @unique
+    //url          String?        @unique
+    actions      Actions[]
+    reactions    Reactions[]
+    userServices UserService[]
+}
+
+model Actions {
+    id          Int         @id
+    serviceId   Int
+    service     Services    @relation(fields: [serviceId], references: [id])
+    name        String      @unique
+    description String
+    data        String[]
+    workflows   Workflows[]
+}
+
+model Reactions {
+    id          Int         @id
+    serviceId   Int
+    service     Services    @relation(fields: [serviceId], references: [id])
+    name        String      @unique
+    description String
+    data        String[]
+    workflows   Workflows[]
+}
+
+model Workflows {
+    id           Int            @id @default(autoincrement())
+    userId       Int
+    user         Users          @relation(fields: [userId], references: [id])
+    name         String
+    description  String?
+    actionId     Int
+    action       Actions        @relation(fields: [actionId], references: [id])
+    actionData   String[]
+    reactionId   Int
+    reaction     Reactions      @relation(fields: [reactionId], references: [id])
+    reactionData String[]
+    timerTriggers TimerTrigger[]
+}
+
+model Log {
+    id        Int      @id @default(autoincrement())
+    level     String
+    message   String
+    context   String?
+    metadata  Json?
+    timestamp DateTime @default(now())
+}
+
+model TimerTrigger {
+    id          Int       @id @default(autoincrement())
+    user        Users     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId      Int
+    workflow    Workflows @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+    workflowId  Int
+    // Timer trigger type: 'date', 'time', 'future_date'
+    type        String
+    // For 'date' type: DD/MM format (e.g., "25/12")
+    datePattern String?
+    // For 'time' type: HH:MM format (e.g., "09:30")
+    timePattern String?
+    // For 'future_date' type: number of days ahead
+    daysAhead   Int?
+    // Human-readable description
+    description String?
+    // Whether the trigger is active
+    enabled     Boolean   @default(true)
+    // When the trigger was created
+    createdAt   DateTime  @default(now())
+    // When the trigger was last updated
+    updatedAt   DateTime  @updatedAt
+    // When the trigger last fired (for logging/debugging)
+    lastFiredAt DateTime?
+}

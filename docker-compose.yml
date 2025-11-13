@@ -1,0 +1,119 @@
+services:
+  client_web:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "8081:3000"
+    volumes:
+      - ./frontend:/app
+      - front_shared:/shared
+      - apk_shared:/app/public
+    environment:
+      API_PORT: 8080
+      AUTH_PORT: 8082
+    stdin_open: true
+    tty: true
+    depends_on:
+      - client_mobile
+
+  server:
+    build: ./backend/api
+    restart: unless-stopped
+    user: "1000:1000"
+    ports:
+      - "8080:8080"
+      - "5555:5555"
+    volumes:
+      - ./backend/api:/app
+      - ./backend/shared:/shared
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://db_user:db_password@db:5432/db_name}
+      JWT_SECRET: ${JWT_SECRET:-supersecret}
+      AUTH_KEY: ${AUTH_KEY:-authkeysupersecret}
+      WORKFLOW_URL: ${WORKFLOW_URL:-http://workflow:8083}
+      PORT: 8080
+    depends_on:
+      - db
+
+  auth:
+    build: ./backend/auth
+    restart: unless-stopped
+    user: "1000:1000"
+    ports:
+      - "8082:8082"
+    volumes:
+      - ./backend/auth:/app
+      - ./backend/shared:/shared
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://db_user:db_password@db:5432/db_name}
+      JWT_SECRET: ${JWT_SECRET:-supersecret}
+      AUTH_KEY: ${AUTH_KEY:-authkeysupersecret}
+      PORT: 8082
+      API_PORT: 8080
+    depends_on:
+      - db
+      - server
+
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./backend/shared/prisma/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    environment:
+      POSTGRES_USER: ${DB_USER:-db_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-db_password}
+      POSTGRES_DB: ${DB_NAME:-db_name}
+
+  link:
+    build: ./backend/link
+    restart: unless-stopped
+    user: "1000:1000"
+    ports:
+      - "8084:8084"
+    volumes:
+      - ./backend/link:/app
+      - ./backend/shared:/shared
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://db_user:db_password@db:5432/db_name}
+      JWT_SECRET: ${JWT_SECRET:-supersecret}
+      AUTH_KEY: ${AUTH_KEY:-authkeysupersecret}
+      PORT: 8084
+      BASE_URL: ${BASE_URL:-http://localhost:8084}
+      SLACK_BASE_URL: ${SLACK_BASE_URL:-http://localhost:8084}
+      REDIRECT_URL: ${REDIRECT_URL:-http://localhost:8081/user}
+      DISCORD_CLIENT_ID: ${DISCORD_CLIENT_ID}
+      DISCORD_CLIENT_SECRET: ${DISCORD_CLIENT_SECRET}
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      REDDIT_CLIENT_ID: ${REDDIT_CLIENT_ID}
+      REDDIT_CLIENT_SECRET: ${REDDIT_CLIENT_SECRET}
+      SPOTIFY_CLIENT_ID: ${SPOTIFY_CLIENT_ID}
+      SPOTIFY_CLIENT_SECRET: ${SPOTIFY_CLIENT_SECRET}
+      SLACK_CLIENT_ID: ${SLACK_CLIENT_ID}
+      SLACK_CLIENT_SECRET: ${SLACK_CLIENT_SECRET}
+    depends_on:
+      - db
+
+  workflow:
+    build: ./backend/workflow
+    restart: unless-stopped
+    user: "1000:1000"
+    ports:
+      - "8083:8083"
+    volumes:
+      - ./backend/workflow:/app
+      - ./backend/shared:/shared
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://db_user:db_password@db:5432/db_name}
+      PORT: 8083
+      DISCORD_BOT_TOKEN: ${DISCORD_BOT_TOKEN}
+    depends_on:
+      - db
+volumes:
+  db_data:
+  front_shared:
+  apk_shared:

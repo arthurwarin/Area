@@ -1,0 +1,30 @@
+import { PrismaClient } from '../../shared/prisma/client';
+
+const prisma = new PrismaClient();
+
+export default prisma;
+
+process.on("SIGINT", async () => {
+	console.error("SIGINT received");
+	await prisma.$disconnect();
+	process.exit(0);
+});
+
+process.on("SIGTERM", async () => {
+	console.error("SIGNTERM received");
+	await prisma.$disconnect();
+	process.exit(0);
+});
+
+
+process.on("uncaughtException", async (err) => {
+	console.error("Uncaught Exception:", err);
+	await prisma.$disconnect();
+	process.exit(1);
+});
+
+process.on("unhandledRejection", async (reason) => {
+	console.error("Unhandled Rejection:", reason);
+	await prisma.$disconnect();
+	process.exit(1);
+});
